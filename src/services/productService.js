@@ -100,7 +100,7 @@ let mockProducts = [
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 // Set to true once your backend is live, false keeps using in-memory mock data.
-const USE_REAL_API = false;
+const USE_REAL_API = true;
 
 export async function getProducts() {
   if (USE_REAL_API) {
