@@ -26,7 +26,7 @@ export default function Layout({ children, showAdminBadge = false }) {
         <Link to="/menu" className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
           <MasCoffeeLogo className="w-10 h-10" />
           <span className="font-display font-bold tracking-wider text-xl text-cafe-green">
-            MAS <span className="text-cafe-gold">COFFEE</span>
+            MAS COFFEE
           </span>
         </Link>
         <div className="flex items-center gap-2">
