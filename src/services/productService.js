@@ -117,6 +117,7 @@ export async function updatePrice(productId, newPrice) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ price: newPrice }),
     });
     if (!res.ok) throw new Error('Failed to update price');
@@ -126,6 +127,7 @@ export async function updatePrice(productId, newPrice) {
   mockProducts = mockProducts.map((p) => (p._id === productId ? { ...p, price: newPrice } : p));
   return mockProducts.find((p) => p._id === productId);
 }
+
 
 export async function updateImageUrl(productId, newImageUrl) {
   if (USE_REAL_API) {
@@ -143,19 +145,7 @@ export async function updateImageUrl(productId, newImageUrl) {
   return mockProducts.find((p) => p._id === productId);
 }
 
-export async function updatePrice(productId, newPrice) {
-  if (USE_REAL_API) {
-    const res = await fetch(`${API_BASE}/products/${productId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // ← was missing
-      body: JSON.stringify({ price: newPrice }),
-    });
-    if (!res.ok) throw new Error('Failed to update price');
-    return res.json();
-  }
-  // ...unchanged
-}
+
 
 export async function toggleStock(productId, inStock) {
   if (USE_REAL_API) {
