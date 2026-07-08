@@ -1,81 +1,4 @@
-// // Swap this file's internals for real fetch() calls to your Express API
-// // (or Firebase Firestore calls) without touching any component code.
-
-// const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// const MOCK_DELAY = 400;
-
-// let mockProducts = [
-//   { _id: '1', name: 'Macchiato', category: 'Coffee Drinks', price: 65, description: 'Espresso with a dash of steamed milk foam.', imageUrl: '', inStock: true },
-//   { _id: '2', name: 'Cappuccino', category: 'Coffee Drinks', price: 75, description: 'Equal parts espresso, steamed milk, and foam.', imageUrl: '', inStock: true },
-//   { _id: '3', name: 'Chocolate Cake', category: 'Cakes & Sweets', price: 120, description: 'Rich layered chocolate sponge with ganache.', imageUrl: '', inStock: false },
-//   { _id: '4', name: 'Iced Caramel Special', category: 'Specials', price: 95, description: 'House cold brew with caramel drizzle.', imageUrl: '', inStock: true },
-// ];
-
-// const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-// // Set to true once your backend is live, false keeps using in-memory mock data.
-// const USE_REAL_API = false;
-
-// export async function getProducts() {
-//   if (USE_REAL_API) {
-//     const res = await fetch(`${API_BASE}/products`);
-//     if (!res.ok) throw new Error('Failed to fetch products');
-//     return res.json();
-//   }
-//   await delay(MOCK_DELAY);
-//   return [...mockProducts];
-// }
-
-// export async function updatePrice(productId, newPrice) {
-//   if (USE_REAL_API) {
-//     const res = await fetch(`${API_BASE}/products/${productId}`, {
-//       method: 'PATCH',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ price: newPrice }),
-//     });
-//     if (!res.ok) throw new Error('Failed to update price');
-//     return res.json();
-//   }
-//   await delay(200);
-//   mockProducts = mockProducts.map((p) => (p._id === productId ? { ...p, price: newPrice } : p));
-//   return mockProducts.find((p) => p._id === productId);
-// }
-
-// export async function toggleStock(productId, inStock) {
-//   if (USE_REAL_API) {
-//     const res = await fetch(`${API_BASE}/products/${productId}`, {
-//       method: 'PATCH',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ inStock }),
-//     });
-//     if (!res.ok) throw new Error('Failed to update stock status');
-//     return res.json();
-//   }
-//   await delay(200);
-//   mockProducts = mockProducts.map((p) => (p._id === productId ? { ...p, inStock } : p));
-//   return mockProducts.find((p) => p._id === productId);
-// }
-
-// export async function addProduct(product) {
-//   if (USE_REAL_API) {
-//     const res = await fetch(`${API_BASE}/products`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify(product),
-//     });
-//     if (!res.ok) throw new Error('Failed to add product');
-//     return res.json();
-//   }
-//   await delay(300);
-//   const newProduct = { ...product, _id: String(Date.now()), inStock: true };
-//   mockProducts = [...mockProducts, newProduct];
-//   return newProduct;
-// }
-
-
-// Swap this file's internals for real fetch() calls to your Express API
-// (or Firebase Firestore calls) without touching any component code.
+import { getToken } from './authToken';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -102,6 +25,16 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 // Set to true once your backend is live, false keeps using in-memory mock data.
 const USE_REAL_API = true;
 
+// Builds the headers for a protected (write) request, attaching the saved
+// login token so the backend's requireAuth middleware accepts it.
+function authHeaders() {
+  const token = getToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export async function getProducts() {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products`);
@@ -116,8 +49,7 @@ export async function updatePrice(productId, newPrice) {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: authHeaders(),
       body: JSON.stringify({ price: newPrice }),
     });
     if (!res.ok) throw new Error('Failed to update price');
@@ -128,13 +60,11 @@ export async function updatePrice(productId, newPrice) {
   return mockProducts.find((p) => p._id === productId);
 }
 
-
 export async function updateImageUrl(productId, newImageUrl) {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: authHeaders(),
       body: JSON.stringify({ imageUrl: newImageUrl }),
     });
     if (!res.ok) throw new Error('Failed to update image URL');
@@ -145,42 +75,11 @@ export async function updateImageUrl(productId, newImageUrl) {
   return mockProducts.find((p) => p._id === productId);
 }
 
-
-
 export async function toggleStock(productId, inStock) {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-
-      body: JSON.stringify({ inStock }),
-    });
-    if (!res.ok) throw new Error('Failed to update stock status');
-    return res.json();
-  }
-  // ...unchanged
-}
-
-export async function addProduct(product) {
-  if (USE_REAL_API) {
-    const res = await fetch(`${API_BASE}/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // ← was missing
-      body: JSON.stringify(product),
-    });
-    if (!res.ok) throw new Error('Failed to add product');
-    return res.json();
-  }
-  // ...unchanged
-}
-
-export async function toggleStock(productId, inStock) {
-  if (USE_REAL_API) {
-    const res = await fetch(`${API_BASE}/products/${productId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: authHeaders(),
       body: JSON.stringify({ inStock }),
     });
     if (!res.ok) throw new Error('Failed to update stock status');
@@ -195,7 +94,7 @@ export async function addProduct(product) {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify(product),
     });
     if (!res.ok) throw new Error('Failed to add product');

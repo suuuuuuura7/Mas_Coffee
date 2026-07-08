@@ -1,31 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
+import { getToken, setToken } from '../services/authToken';
 import { addProduct, getProducts, toggleStock, updateImageUrl, updatePrice } from '../services/productService';
+
 const CATEGORY_OPTIONS = ['Coffee Drinks', 'Tea', 'Mocktails', 'Cakes & Sweets', 'Specials'];
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function LoginGate({ onSuccess }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/login`, {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // required so the cookie is stored
         body: JSON.stringify({ username, password }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.message || 'Incorrect username or password.');
+        setError(data.message || 'Login failed.');
         return;
       }
+      setToken(data.token);
       onSuccess();
     } catch (err) {
-      setError('Could not reach the server.');
+      setError('Could not reach the server. Check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,21 +51,94 @@ function LoginGate({ onSuccess }) {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Dashboard password"
+          placeholder="Password"
           className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
-        <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm">
-          Enter Dashboard
+        <button type="submit" disabled={loading} className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm disabled:opacity-60">
+          {loading ? 'Logging in...' : 'Enter Dashboard'}
         </button>
       </form>
     </div>
   );
 }
 
+function ChangePasswordPanel() {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setMessage({ type: 'error', text: 'New password and confirmation do not match.' });
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: 'error', text: data.message || 'Could not update password.' });
+        return;
+      }
+      setMessage({ type: 'success', text: 'Password updated. Use the new password next time you log in.' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Could not reach the server.' });
+    }
+  };
+
+  return (
+    <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100">
+      <h2 className="font-display font-bold text-cafe-dark mb-4">Security Settings</h2>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-sm">
+        <input
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          placeholder="Current password"
+          className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
+        />
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="New password"
+          className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
+        />
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Confirm new password"
+          className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
+        />
+        {message.text && (
+          <p className={`text-xs ${message.type === 'error' ? 'text-red-500' : 'text-cafe-green'}`}>
+            {message.text}
+          </p>
+        )}
+        <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm">
+          Update Password
+        </button>
+      </form>
+    </section>
+  );
+}
+
 function PriceInput({ product, onSaved }) {
   const [value, setValue] = useState(String(product.price));
-  const [status, setStatus] = useState(''); // '' | 'saving' | 'saved'
+  const [status, setStatus] = useState('');
 
   const commit = async () => {
     const numeric = parseFloat(value.replace(/[^0-9.]/g, ''));
@@ -75,13 +155,14 @@ function PriceInput({ product, onSaved }) {
       setStatus('');
       setValue(String(product.price));
       alert('Could not save price — try again.');
+      return;
     }
     setTimeout(() => setStatus(''), 2000);
   };
 
   return (
     <div className="flex items-center gap-2">
-      {status === 'saved' && <span className="text-[10px] text-cafe-green font-bold uppercase transition-all animate-pulse">Saved!</span>}
+      {status === 'saved' && <span className="text-[10px] text-cafe-green font-bold uppercase animate-pulse">Saved!</span>}
       <input
         type="text"
         inputMode="decimal"
@@ -113,7 +194,6 @@ function ImageUrlEditor({ product, onSaved }) {
       setEditing(false);
     } catch (err) {
       setError('Save failed — try again.');
-      console.error('Image update failed:', err);
     }
   };
 
@@ -147,32 +227,31 @@ function ImageUrlEditor({ product, onSaved }) {
     />
   );
 }
+
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ name: '', category: CATEGORY_OPTIONS[0], price: '', description: '', imageUrl: '' });
   const [formError, setFormError] = useState('');
 
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordStatus, setPasswordStatus] = useState('');
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setCheckingSession(false);
+      return;
+    }
+    fetch(`${API_BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => setAuthed(res.ok))
+      .finally(() => setCheckingSession(false));
+  }, []);
 
   useEffect(() => {
     if (authed) getProducts().then(setProducts);
   }, [authed]);
-
-  const handlePasswordChange = (e) => {
-    e.preventDefault();
-    if (newPassword.trim().length < 4) {
-      setPasswordStatus('Too short!');
-      setTimeout(() => setPasswordStatus(''), 2000);
-      return;
-    }
-    localStorage.setItem('adminPassword', newPassword.trim());
-    setNewPassword('');
-    setPasswordStatus('Saved!');
-    setTimeout(() => setPasswordStatus(''), 2000);
-  };
 
   const handleFormChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -199,7 +278,7 @@ export default function AdminDashboard() {
     setForm({ name: '', category: CATEGORY_OPTIONS[0], price: '', description: '', imageUrl: '' });
   };
 
-  const handlePriceSaved = (updated) => {
+  const handleProductSaved = (updated) => {
     setProducts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)));
   };
 
@@ -210,13 +289,19 @@ export default function AdminDashboard() {
 
   const filteredProducts = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cafe-dark">
+        <p className="text-cafe-cream text-sm">Loading...</p>
+      </div>
+    );
+  }
+
   if (!authed) return <LoginGate onSuccess={() => setAuthed(true)} />;
 
   return (
     <Layout showAdminBadge>
       <div className="px-4 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-
-        {/* LEFT COLUMN */}
         <div className="flex flex-col gap-6">
           <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100">
             <h2 className="font-display font-bold text-cafe-dark mb-4">Add New Product</h2>
@@ -263,29 +348,9 @@ export default function AdminDashboard() {
             </form>
           </section>
 
-          <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100">
-            <h2 className="font-display font-bold text-cafe-dark mb-4">Security Settings</h2>
-            <form onSubmit={handlePasswordChange} className="flex gap-3">
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New admin password"
-                className="flex-grow rounded-lg border border-black px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg px-4 py-2 text-sm whitespace-nowrap">
-                Update Password
-              </button>
-            </form>
-            {passwordStatus && (
-              <p className={`text-xs mt-2 font-bold uppercase transition-all animate-pulse ${passwordStatus === 'Saved!' ? 'text-cafe-green' : 'text-red-500'}`}>
-                {passwordStatus}
-              </p>
-            )}
-          </section>
+          <ChangePasswordPanel />
         </div>
 
-        {/* RIGHT COLUMN */}
         <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100">
           <h2 className="font-display font-bold text-cafe-dark mb-4">Manage Products</h2>
           <input
@@ -301,16 +366,6 @@ export default function AdminDashboard() {
                   <p className="text-sm font-semibold truncate">{product.name}</p>
                   <p className="text-xs text-stone-400">{product.category}</p>
                 </div>
-                {/* <div className="flex items-center gap-3 flex-shrink-0">
-                  <button
-                    onClick={() => handleToggleStock(product)}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${product.inStock ? 'bg-cafe-green/20 text-cafe-green' : 'bg-red-100 text-red-500'
-                      }`}
-                  >
-                    {product.inStock ? 'In stock' : 'Out of stock'}
-                  </button>
-                  <PriceInput product={product} onSaved={handlePriceSaved} />
-                </div> */}
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <button
                     onClick={() => handleToggleStock(product)}
@@ -319,8 +374,8 @@ export default function AdminDashboard() {
                   >
                     {product.inStock ? 'In stock' : 'Out of stock'}
                   </button>
-                  <ImageUrlEditor product={product} onSaved={handlePriceSaved} />
-                  <PriceInput product={product} onSaved={handlePriceSaved} />
+                  <ImageUrlEditor product={product} onSaved={handleProductSaved} />
+                  <PriceInput product={product} onSaved={handleProductSaved} />
                 </div>
               </div>
             ))}
