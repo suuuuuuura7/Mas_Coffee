@@ -1,9 +1,10 @@
 import express from 'express';
 import Product from '../models/Product.js';
+import requireAuth from '../middleware/requireAuth.js';
 
 const router = express.Router();
 
-// GET /api/products - list all products (customer menu + admin dashboard)
+// GET /api/products - list all products (customer menu + admin dashboard) - public
 router.get('/', async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: 1 });
@@ -13,8 +14,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/products - create a new product (admin only in production)
-router.post('/', async (req, res) => {
+// POST /api/products - create a new product - ADMIN ONLY
+router.post('/', requireAuth, async (req, res) => {
   try {
     const product = await Product.create(req.body);
     res.status(201).json(product);
@@ -23,8 +24,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /api/products/:id - update price and/or stock status
-router.patch('/:id', async (req, res) => {
+// PATCH /api/products/:id - update price and/or stock status - ADMIN ONLY
+router.patch('/:id', requireAuth, async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
@@ -38,8 +39,8 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/products/:id
-router.delete('/:id', async (req, res) => {
+// DELETE /api/products/:id - ADMIN ONLY
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Product not found' });
@@ -48,7 +49,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-
 
 export default router;

@@ -1,9 +1,11 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import productRoutes from './routes/products.js';
 import dns from 'dns';
+import productRoutes from './routes/products.js';
+import authRoutes from './routes/auth.js';
 
 dns.setDefaultResultOrder('ipv4first');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
@@ -11,9 +13,21 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// credentials: true + an explicit origin (not "*") is required so the browser
+// will actually send/receive the httpOnly auth cookie across domains
+// (your Vercel frontend calling your Render backend).
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
+
 app.use('/api/products', productRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => res.send('MAS COFFEE API is running.'));
 
