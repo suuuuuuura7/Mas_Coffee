@@ -152,7 +152,7 @@ export async function toggleStock(productId, inStock) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // ← was missing
+
       body: JSON.stringify({ inStock }),
     });
     if (!res.ok) throw new Error('Failed to update stock status');
@@ -180,6 +180,7 @@ export async function toggleStock(productId, inStock) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ inStock }),
     });
     if (!res.ok) throw new Error('Failed to update stock status');
