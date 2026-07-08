@@ -1,4 +1,4 @@
-import { getToken } from './authToken';
+import { getToken, clearToken } from './authToken';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -25,8 +25,19 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 // Set to true once your backend is live, false keeps using in-memory mock data.
 const USE_REAL_API = true;
 
-// Builds the headers for a protected (write) request, attaching the saved
-// login token so the backend's requireAuth middleware accepts it.
+// Wraps fetch for protected (write) requests. If the token is missing or
+// expired the backend replies 401 — instead of a vague error, we clear the
+// stale token and reload so the user lands back on the login screen.
+async function authedFetch(url, options) {
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    clearToken();
+    window.location.reload();
+    throw new Error('Session expired — please log in again.');
+  }
+  return res;
+}
+
 function authHeaders() {
   const token = getToken();
   return {
@@ -47,7 +58,7 @@ export async function getProducts() {
 
 export async function updatePrice(productId, newPrice) {
   if (USE_REAL_API) {
-    const res = await fetch(`${API_BASE}/products/${productId}`, {
+    const res = await authedFetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ price: newPrice }),
@@ -62,7 +73,7 @@ export async function updatePrice(productId, newPrice) {
 
 export async function updateImageUrl(productId, newImageUrl) {
   if (USE_REAL_API) {
-    const res = await fetch(`${API_BASE}/products/${productId}`, {
+    const res = await authedFetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ imageUrl: newImageUrl }),
@@ -77,7 +88,7 @@ export async function updateImageUrl(productId, newImageUrl) {
 
 export async function toggleStock(productId, inStock) {
   if (USE_REAL_API) {
-    const res = await fetch(`${API_BASE}/products/${productId}`, {
+    const res = await authedFetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ inStock }),
@@ -92,7 +103,7 @@ export async function toggleStock(productId, inStock) {
 
 export async function addProduct(product) {
   if (USE_REAL_API) {
-    const res = await fetch(`${API_BASE}/products`, {
+    const res = await authedFetch(`${API_BASE}/products`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(product),

@@ -101,7 +101,7 @@ function ChangePasswordPanel() {
   return (
     <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100">
       <h2 className="font-display font-bold text-cafe-dark mb-4">Security Settings</h2>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-sm">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 ">
         <input
           type="password"
           value={currentPassword}
