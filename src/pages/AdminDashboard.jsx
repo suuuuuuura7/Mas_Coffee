@@ -67,9 +67,15 @@ function PriceInput({ product, onSaved }) {
       return;
     }
     setStatus('saving');
-    const updated = await updatePrice(product._id, numeric);
-    onSaved(updated);
-    setStatus('saved');
+    try {
+      const updated = await updatePrice(product._id, numeric);
+      onSaved(updated);
+      setStatus('saved');
+    } catch (err) {
+      setStatus('');
+      setValue(String(product.price));
+      alert('Could not save price — try again.');
+    }
     setTimeout(() => setStatus(''), 2000);
   };
 

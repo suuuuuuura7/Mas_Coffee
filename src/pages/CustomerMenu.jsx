@@ -265,8 +265,8 @@ export default function CustomerMenu() {
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={`whitespace-nowrap text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${activeCategory === cat
-                ? 'bg-cafe-dark text-cafe-green'
-                : 'bg-white text-stone-500 border border-stone-200'
+              ? 'bg-cafe-dark text-cafe-green'
+              : 'bg-white text-stone-500 border border-stone-200'
               }`}
           >
             {cat}
@@ -274,7 +274,7 @@ export default function CustomerMenu() {
         ))}
       </div>
 
-      <div className="px-4 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="px-3 py-4 grid grid-cols-2 md:grid-cols-3 gap-3 sm:px-4 sm:gap-4">
         {loading &&
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-56 rounded-2xl bg-stone-100 animate-pulse" />

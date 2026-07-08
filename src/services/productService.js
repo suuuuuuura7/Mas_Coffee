@@ -143,6 +143,48 @@ export async function updateImageUrl(productId, newImageUrl) {
   return mockProducts.find((p) => p._id === productId);
 }
 
+export async function updatePrice(productId, newPrice) {
+  if (USE_REAL_API) {
+    const res = await fetch(`${API_BASE}/products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // ← was missing
+      body: JSON.stringify({ price: newPrice }),
+    });
+    if (!res.ok) throw new Error('Failed to update price');
+    return res.json();
+  }
+  // ...unchanged
+}
+
+export async function toggleStock(productId, inStock) {
+  if (USE_REAL_API) {
+    const res = await fetch(`${API_BASE}/products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // ← was missing
+      body: JSON.stringify({ inStock }),
+    });
+    if (!res.ok) throw new Error('Failed to update stock status');
+    return res.json();
+  }
+  // ...unchanged
+}
+
+export async function addProduct(product) {
+  if (USE_REAL_API) {
+    const res = await fetch(`${API_BASE}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // ← was missing
+      body: JSON.stringify(product),
+    });
+    if (!res.ok) throw new Error('Failed to add product');
+    return res.json();
+  }
+  // ...unchanged
+}
+
 export async function toggleStock(productId, inStock) {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
