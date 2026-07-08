@@ -56,26 +56,6 @@ function LoginGate({ onSuccess }) {
   );
 }
 
-return (
-  <div className="min-h-screen flex items-center justify-center bg-cafe-dark px-4">
-    <form onSubmit={handleSubmit} className="bg-cafe-cream rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4 shadow-2xl">
-      <h1 className="font-display font-bold text-xl text-cafe-dark text-center">Admin Login</h1>
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Dashboard password"
-        className="rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cafe-green"
-      />
-      {error && <p className="text-xs text-red-500">{error}</p>}
-      <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm">
-        Enter Dashboard
-      </button>
-    </form>
-  </div>
-);
-}
-
 function PriceInput({ product, onSaved }) {
   const [value, setValue] = useState(String(product.price));
   const [status, setStatus] = useState(''); // '' | 'saving' | 'saved'
