@@ -4,17 +4,28 @@ import { addProduct, getProducts, toggleStock, updateImageUrl, updatePrice } fro
 const CATEGORY_OPTIONS = ['Coffee Drinks', 'Tea', 'Mocktails', 'Cakes & Sweets', 'Specials'];
 
 function LoginGate({ onSuccess }) {
+  const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulation only. Read from localStorage so changed passwords persist.
-    const activePassword = localStorage.getItem('adminPassword') || 'mascoffee2026';
-    if (password === activePassword) {
+    setError('');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // required so the cookie is stored
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.message || 'Incorrect username or password.');
+        return;
+      }
       onSuccess();
-    } else {
-      setError('Incorrect password.');
+    } catch (err) {
+      setError('Could not reach the server.');
     }
   };
 
@@ -23,11 +34,18 @@ function LoginGate({ onSuccess }) {
       <form onSubmit={handleSubmit} className="bg-cafe-cream rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4 shadow-2xl">
         <h1 className="font-display font-bold text-xl text-cafe-dark text-center">Admin Login</h1>
         <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
+          className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
+        />
+        <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Dashboard password"
-          className="rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cafe-green"
+          className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
         <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm">
@@ -36,6 +54,26 @@ function LoginGate({ onSuccess }) {
       </form>
     </div>
   );
+}
+
+return (
+  <div className="min-h-screen flex items-center justify-center bg-cafe-dark px-4">
+    <form onSubmit={handleSubmit} className="bg-cafe-cream rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4 shadow-2xl">
+      <h1 className="font-display font-bold text-xl text-cafe-dark text-center">Admin Login</h1>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Dashboard password"
+        className="rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cafe-green"
+      />
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm">
+        Enter Dashboard
+      </button>
+    </form>
+  </div>
+);
 }
 
 function PriceInput({ product, onSaved }) {
