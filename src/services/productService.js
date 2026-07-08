@@ -127,6 +127,22 @@ export async function updatePrice(productId, newPrice) {
   return mockProducts.find((p) => p._id === productId);
 }
 
+export async function updateImageUrl(productId, newImageUrl) {
+  if (USE_REAL_API) {
+    const res = await fetch(`${API_BASE}/products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ imageUrl: newImageUrl }),
+    });
+    if (!res.ok) throw new Error('Failed to update image URL');
+    return res.json();
+  }
+  await delay(200);
+  mockProducts = mockProducts.map((p) => (p._id === productId ? { ...p, imageUrl: newImageUrl } : p));
+  return mockProducts.find((p) => p._id === productId);
+}
+
 export async function toggleStock(productId, inStock) {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products/${productId}`, {
