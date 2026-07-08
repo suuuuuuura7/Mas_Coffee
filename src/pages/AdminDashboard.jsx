@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { addProduct, getProducts, toggleStock, updatePrice } from '../services/productService';
-
+import { addProduct, getProducts, toggleStock, updateImageUrl, updatePrice } from '../services/productService';
 const CATEGORY_OPTIONS = ['Coffee Drinks', 'Tea', 'Mocktails', 'Cakes & Sweets', 'Specials'];
 
 function LoginGate({ onSuccess }) {
@@ -72,6 +71,48 @@ function PriceInput({ product, onSaved }) {
   );
 }
 
+function ImageUrlEditor({ product, onSaved }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(product.imageUrl || '');
+
+  const commit = async () => {
+    if (!value.trim()) {
+      setValue(product.imageUrl || '');
+      setEditing(false);
+      return;
+    }
+    const updated = await updateImageUrl(product._id, value.trim());
+    onSaved(updated);
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 hover:text-cafe-dark"
+      >
+        {product.imageUrl && (
+          <img src={product.imageUrl} alt="" className="w-6 h-6 rounded object-cover" />
+        )}
+        Edit photo
+      </button>
+    );
+  }
+
+  return (
+    <input
+      autoFocus
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+      placeholder="Paste image URL"
+      className="w-40 rounded-md border border-stone-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-cafe-gold"
+    />
+  );
+}
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(false);
   const [products, setProducts] = useState([]);
@@ -226,6 +267,16 @@ export default function AdminDashboard() {
                   <p className="text-sm font-semibold truncate">{product.name}</p>
                   <p className="text-xs text-stone-400">{product.category}</p>
                 </div>
+                {/* <div className="flex items-center gap-3 flex-shrink-0">
+                  <button
+                    onClick={() => handleToggleStock(product)}
+                    className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${product.inStock ? 'bg-cafe-green/20 text-cafe-green' : 'bg-red-100 text-red-500'
+                      }`}
+                  >
+                    {product.inStock ? 'In stock' : 'Out of stock'}
+                  </button>
+                  <PriceInput product={product} onSaved={handlePriceSaved} />
+                </div> */}
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <button
                     onClick={() => handleToggleStock(product)}
@@ -234,6 +285,7 @@ export default function AdminDashboard() {
                   >
                     {product.inStock ? 'In stock' : 'Out of stock'}
                   </button>
+                  <ImageUrlEditor product={product} onSaved={handlePriceSaved} />
                   <PriceInput product={product} onSaved={handlePriceSaved} />
                 </div>
               </div>
