@@ -74,6 +74,7 @@ function PriceInput({ product, onSaved }) {
 function ImageUrlEditor({ product, onSaved }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(product.imageUrl || '');
+  const [error, setError] = useState('');
 
   const commit = async () => {
     if (!value.trim()) {
@@ -81,22 +82,31 @@ function ImageUrlEditor({ product, onSaved }) {
       setEditing(false);
       return;
     }
-    const updated = await updateImageUrl(product._id, value.trim());
-    onSaved(updated);
-    setEditing(false);
+    try {
+      setError('');
+      const updated = await updateImageUrl(product._id, value.trim());
+      onSaved(updated);
+      setEditing(false);
+    } catch (err) {
+      setError('Save failed — try again.');
+      console.error('Image update failed:', err);
+    }
   };
 
   if (!editing) {
     return (
-      <button
-        onClick={() => setEditing(true)}
-        className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 hover:text-cafe-dark"
-      >
-        {product.imageUrl && (
-          <img src={product.imageUrl} alt="" className="w-6 h-6 rounded object-cover" />
-        )}
-        Edit photo
-      </button>
+      <div className="flex flex-col items-end">
+        <button
+          onClick={() => setEditing(true)}
+          className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 hover:text-cafe-dark"
+        >
+          {product.imageUrl && (
+            <img src={product.imageUrl} alt="" className="w-6 h-6 rounded object-cover" />
+          )}
+          Edit photo
+        </button>
+        {error && <span className="text-[10px] text-red-500">{error}</span>}
+      </div>
     );
   }
 
