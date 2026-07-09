@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { getToken, setToken } from '../services/authToken';
 import { addProduct, getProducts, toggleStock, updateImageUrl, updatePrice } from '../services/productService';
 
 const CATEGORY_OPTIONS = ['Coffee Drinks', 'Tea', 'Mocktails', 'Cakes & Sweets', 'Specials'];
@@ -19,6 +18,7 @@ function LoginGate({ onSuccess }) {
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
@@ -27,7 +27,8 @@ function LoginGate({ onSuccess }) {
         setError(data.message || 'Login failed.');
         return;
       }
-      setToken(data.token);
+      // No token to store — the browser already holds the httpOnly cookie
+      // the backend set on this response.
       onSuccess();
     } catch (err) {
       setError('Could not reach the server. Check your connection and try again.');
@@ -78,10 +79,8 @@ function ChangePasswordPanel() {
     try {
       const res = await fetch(`${API_BASE}/auth/change-password`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await res.json();
@@ -101,7 +100,7 @@ function ChangePasswordPanel() {
   return (
     <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100">
       <h2 className="font-display font-bold text-cafe-dark mb-4">Security Settings</h2>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 ">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="password"
           value={currentPassword}
@@ -237,14 +236,10 @@ export default function AdminDashboard() {
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setCheckingSession(false);
-      return;
-    }
-    fetch(`${API_BASE}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    // Cookie-based session check: no token to read from storage anymore.
+    // The browser sends the httpOnly cookie automatically as long as we
+    // pass credentials: 'include'.
+    fetch(`${API_BASE}/auth/me`, { credentials: 'include' })
       .then((res) => setAuthed(res.ok))
       .finally(() => setCheckingSession(false));
   }, []);

@@ -25,25 +25,22 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 // Set to true once your backend is live, false keeps using in-memory mock data.
 const USE_REAL_API = true;
 
-// Wraps fetch for protected (write) requests. If the token is missing or
-// expired the backend replies 401 — instead of a vague error, we clear the
-// stale token and reload so the user lands back on the login screen.
-async function authedFetch(url, options) {
-  const res = await fetch(url, options);
+// Wraps fetch for protected (write) requests. Auth is via an httpOnly cookie
+// the backend sets on login — credentials: 'include' is what makes the
+// browser send that cookie on cross-site requests (Vercel -> Render).
+// If the cookie is missing/expired the backend replies 401; instead of a
+// vague error, we reload so the user lands back on the login screen.
+async function authedFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+  });
   if (res.status === 401) {
-    clearToken();
     window.location.reload();
     throw new Error('Session expired — please log in again.');
   }
   return res;
-}
-
-function authHeaders() {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
 }
 
 export async function getProducts() {
@@ -60,7 +57,6 @@ export async function updatePrice(productId, newPrice) {
   if (USE_REAL_API) {
     const res = await authedFetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
-      headers: authHeaders(),
       body: JSON.stringify({ price: newPrice }),
     });
     if (!res.ok) throw new Error('Failed to update price');
@@ -75,7 +71,6 @@ export async function updateImageUrl(productId, newImageUrl) {
   if (USE_REAL_API) {
     const res = await authedFetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
-      headers: authHeaders(),
       body: JSON.stringify({ imageUrl: newImageUrl }),
     });
     if (!res.ok) throw new Error('Failed to update image URL');
@@ -90,7 +85,6 @@ export async function toggleStock(productId, inStock) {
   if (USE_REAL_API) {
     const res = await authedFetch(`${API_BASE}/products/${productId}`, {
       method: 'PATCH',
-      headers: authHeaders(),
       body: JSON.stringify({ inStock }),
     });
     if (!res.ok) throw new Error('Failed to update stock status');
@@ -105,7 +99,6 @@ export async function addProduct(product) {
   if (USE_REAL_API) {
     const res = await authedFetch(`${API_BASE}/products`, {
       method: 'POST',
-      headers: authHeaders(),
       body: JSON.stringify(product),
     });
     if (!res.ok) throw new Error('Failed to add product');
