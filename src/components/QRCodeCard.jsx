@@ -37,6 +37,10 @@ export default function QRCodeCard({
         ref={canvasRef}
         className="rounded-lg border border-stone-200"
       />
+      <canvas
+        ref={canvasRef}
+        className="w-56 h-56 sm:w-64 sm:h-64 rounded-lg border border-stone-200"
+      />
 
       <p className="font-display font-bold tracking-wide text-cafe-dark">SCAN TO VIEW MENU</p>
     </div>
