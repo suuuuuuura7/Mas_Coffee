@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import QRCode from 'qrcode';
 import { MasCoffeeLogo } from './Layout';
 
 // Renders a printable QR code that links to the live menu URL.
-// Uses the free api.qrserver.com endpoint so no extra npm package is required.
+// Generated fully client-side with the 'qrcode' package — no external
+// API calls, so it never depends on a third-party service being up.
 export default function QRCodeCard({
   menuUrl = 'https://mas-coffee-black.vercel.app/menu',
   size = 300,
 }) {
-  const qrImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&color=18-18-18&bgcolor=249-246-238&data=${encodeURIComponent(menuUrl)}`;
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRCode.toCanvas(canvasRef.current, menuUrl, {
+        width: size,
+        margin: 1,
+        color: {
+          dark: '#121212',
+          light: '#F9F6EE',
+        },
+      }).catch((err) => console.error('QR code generation failed:', err));
+    }
+  }, [menuUrl, size]);
 
   return (
     <div className="bg-cafe-cream border-4 border-cafe-gold rounded-2xl p-6 flex flex-col items-center gap-4 shadow-xl w-72 mx-auto print:shadow-none print:border-2">
@@ -18,11 +33,8 @@ export default function QRCodeCard({
         </span>
       </div>
 
-      <img
-        src={qrImageSrc}
-        alt="QR code linking to the digital menu"
-        width={size}
-        height={size}
+      <canvas
+        ref={canvasRef}
         className="rounded-lg border border-stone-200"
       />
 
