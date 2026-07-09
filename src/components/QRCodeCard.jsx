@@ -6,7 +6,7 @@ import { MasCoffeeLogo } from './Layout';
 // Swap the "src" for a self-hosted generator (e.g. "qrcode" npm package) later
 // if you want the QR image generated fully offline.
 export default function QRCodeCard({
-  menuUrl = 'https://your-menu-domain.com/menu',
+  menuUrl = 'https://mas-coffee-black.vercel.app/menu',
   tableLabel = 'Table 1',
   size = 300,
 }) {
@@ -17,7 +17,7 @@ export default function QRCodeCard({
       <div className="flex items-center gap-2">
         <MasCoffeeLogo className="w-8 h-8" />
         <span className="font-display font-bold text-lg text-cafe-dark">
-          MAS <span className="text-cafe-gold">COFFEE</span>
+          MAS COFFEE
         </span>
       </div>
 
