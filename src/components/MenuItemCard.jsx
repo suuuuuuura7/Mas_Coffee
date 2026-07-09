@@ -53,7 +53,7 @@ export default function MenuItemCard({ item }) {
 
   return (
     <div className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100 relative h-full">
-      <div className="relative w-full h-48 sm:h-56 bg-stone-100">
+      <div className="relative w-full h-60 sm:h-72 bg-stone-100">
         {!imageLoaded && <div className="absolute inset-0 animate-pulse bg-stone-200" />}
         {imageUrl && (
           <img
