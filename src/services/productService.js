@@ -109,3 +109,16 @@ export async function addProduct(product) {
   mockProducts = [...mockProducts, newProduct];
   return newProduct;
 }
+
+export async function deleteProduct(productId) {
+  if (USE_REAL_API) {
+    const res = await authedFetch(`${API_BASE}/products/${productId}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete product');
+    return res.json();
+  }
+  await delay(200);
+  mockProducts = mockProducts.filter((p) => p._id !== productId);
+  return { success: true };
+}

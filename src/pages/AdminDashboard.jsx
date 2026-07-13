@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { addProduct, getProducts, toggleStock, updateImageUrl, updatePrice } from '../services/productService';
+import { addProduct, getProducts, toggleStock, updateImageUrl, updatePrice, deleteProduct } from '../services/productService';
 
 const CATEGORY_OPTIONS = ['Coffee Drinks', 'Tea', 'Mocktails', 'Cakes & Sweets', 'Specials'];
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -69,6 +69,7 @@ function ChangePasswordPanel() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,6 +77,7 @@ function ChangePasswordPanel() {
       setMessage({ type: 'error', text: 'New password and confirmation do not match.' });
       return;
     }
+    setUpdatingPassword(true);
     try {
       const res = await fetch(`${API_BASE}/auth/change-password`, {
         method: 'POST',
@@ -94,6 +96,8 @@ function ChangePasswordPanel() {
       setConfirmPassword('');
     } catch (err) {
       setMessage({ type: 'error', text: 'Could not reach the server.' });
+    } finally {
+      setUpdatingPassword(false);
     }
   };
 
@@ -127,8 +131,8 @@ function ChangePasswordPanel() {
             {message.text}
           </p>
         )}
-        <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm">
-          Update Password
+        <button type="submit" disabled={updatingPassword} className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm transition-all disabled:opacity-60 hover:-translate-y-0.5 hover:shadow-md active:scale-95">
+          {updatingPassword ? 'Changing password...' : 'Update Password'}
         </button>
       </form>
     </section>
@@ -234,6 +238,7 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ name: '', category: CATEGORY_OPTIONS[0], price: '', description: '', imageUrl: '' });
   const [formError, setFormError] = useState('');
+  const [addingProduct, setAddingProduct] = useState(false);
 
   useEffect(() => {
     // Cookie-based session check: no token to read from storage anymore.
@@ -262,15 +267,22 @@ export default function AdminDashboard() {
       return;
     }
     setFormError('');
-    const created = await addProduct({
-      name: form.name.trim(),
-      category: form.category,
-      price: priceNumber,
-      description: form.description.trim(),
-      imageUrl: form.imageUrl.trim(),
-    });
-    setProducts((prev) => [...prev, created]);
-    setForm({ name: '', category: CATEGORY_OPTIONS[0], price: '', description: '', imageUrl: '' });
+    setAddingProduct(true);
+    try {
+      const created = await addProduct({
+        name: form.name.trim(),
+        category: form.category,
+        price: priceNumber,
+        description: form.description.trim(),
+        imageUrl: form.imageUrl.trim(),
+      });
+      setProducts((prev) => [...prev, created]);
+      setForm({ name: '', category: CATEGORY_OPTIONS[0], price: '', description: '', imageUrl: '' });
+    } catch (err) {
+      setFormError('Failed to add product. Please try again.');
+    } finally {
+      setAddingProduct(false);
+    }
   };
 
   const handleProductSaved = (updated) => {
@@ -280,6 +292,16 @@ export default function AdminDashboard() {
   const handleToggleStock = async (product) => {
     const updated = await toggleStock(product._id, !product.inStock);
     setProducts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)));
+  };
+
+  const handleDeleteProduct = async (product) => {
+    if (!window.confirm(`Are you sure you want to delete ${product.name}?`)) return;
+    try {
+      await deleteProduct(product._id);
+      setProducts((prev) => prev.filter((p) => p._id !== product._id));
+    } catch (err) {
+      alert('Failed to delete product. Please try again.');
+    }
   };
 
   const filteredProducts = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -337,8 +359,8 @@ export default function AdminDashboard() {
                 className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
               {formError && <p className="text-xs text-red-500">{formError}</p>}
-              <button type="submit" className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm mt-1">
-                Add Product
+              <button type="submit" disabled={addingProduct} className="bg-cafe-dark text-cafe-green font-semibold rounded-lg py-2 text-sm mt-1 transition-all disabled:opacity-60 hover:-translate-y-0.5 hover:shadow-md active:scale-95">
+                {addingProduct ? 'Adding...' : 'Add Product'}
               </button>
             </form>
           </section>
@@ -362,6 +384,12 @@ export default function AdminDashboard() {
                   <p className="text-xs text-stone-400">{product.category}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
+                  <button
+                    onClick={() => handleDeleteProduct(product)}
+                    className="text-[10px] font-bold px-2 py-1 rounded-full uppercase bg-red-100 text-red-500 hover:bg-red-200 transition-colors"
+                  >
+                    Delete
+                  </button>
                   <button
                     onClick={() => handleToggleStock(product)}
                     className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${product.inStock ? 'bg-cafe-green/20 text-cafe-green' : 'bg-red-100 text-red-500'
