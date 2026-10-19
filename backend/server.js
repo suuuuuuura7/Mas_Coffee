@@ -24,7 +24,9 @@ app.use(cookieParser());
 
 function requireDatabase(req, res, next) {
   if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({ message: 'Database is unavailable. Please try again shortly.' });
+    return res.status(503).json({
+      message: 'Database is unavailable. Check the Render MONGODB_URI and MongoDB Atlas Network Access settings.',
+    });
   }
   next();
 }

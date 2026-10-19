@@ -39,7 +39,13 @@ export default function CustomerMenu() {
       })
       .catch((error) => {
         console.error('Failed to load menu:', error);
-        if (mounted) setLoadError('The menu could not be loaded. Please try again.');
+        if (mounted) {
+          setLoadError(
+            error instanceof Error && error.message
+              ? error.message
+              : 'The menu could not be loaded. Please try again.'
+          );
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);

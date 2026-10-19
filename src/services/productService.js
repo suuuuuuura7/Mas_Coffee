@@ -46,7 +46,10 @@ async function authedFetch(url, options = {}) {
 export async function getProducts() {
   if (USE_REAL_API) {
     const res = await fetch(`${API_BASE}/products`);
-    if (!res.ok) throw new Error('Failed to fetch products');
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || `Failed to fetch products (HTTP ${res.status}).`);
+    }
     return res.json();
   }
   await delay(MOCK_DELAY);
