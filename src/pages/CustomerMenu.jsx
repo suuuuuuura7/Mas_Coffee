@@ -22,6 +22,8 @@ const FUSE_OPTIONS = {
 export default function CustomerMenu() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -29,14 +31,21 @@ export default function CustomerMenu() {
 
   useEffect(() => {
     let mounted = true;
-    getProducts().then((data) => {
-      if (mounted) {
-        setProducts(data);
-        setLoading(false);
-      }
-    });
+    setLoading(true);
+    setLoadError('');
+    getProducts()
+      .then((data) => {
+        if (mounted) setProducts(data);
+      })
+      .catch((error) => {
+        console.error('Failed to load menu:', error);
+        if (mounted) setLoadError('The menu could not be loaded. Please try again.');
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
     return () => { mounted = false; };
-  }, []);
+  }, [reloadKey]);
 
   // Close the suggestion dropdown on outside click
   useEffect(() => {
@@ -130,13 +139,27 @@ export default function CustomerMenu() {
       <div className="px-3 py-4 grid grid-cols-2 md:grid-cols-3 gap-3 sm:px-4 sm:gap-4">
         {loading && <MenuSkeleton count={6} />}
 
-        {!loading && filteredProducts.length === 0 && (
+        {!loading && loadError && (
+          <div className="col-span-full flex flex-col items-center gap-3 py-8 text-center">
+            <p className="text-sm text-red-600">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((key) => key + 1)}
+              className="rounded-full bg-cafe-dark px-4 py-2 text-sm font-semibold text-cafe-green"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !loadError && filteredProducts.length === 0 && (
           <p className="col-span-full text-center text-sm text-stone-400 py-8">
             No items match "{searchTerm}". Try a different spelling.
           </p>
         )}
 
         {!loading &&
+          !loadError &&
           filteredProducts.map((item) => <MenuItemCard key={item._id} item={item} />)}
       </div>
     </Layout>

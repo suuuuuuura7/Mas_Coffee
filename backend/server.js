@@ -3,12 +3,8 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import dns from 'dns';
 import productRoutes from './routes/products.js';
 import authRoutes from './routes/auth.js';
-
-dns.setDefaultResultOrder('ipv4first');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 dotenv.config();
 
@@ -33,19 +29,24 @@ app.get('/', (req, res) => res.send('MAS COFFEE API is running.'));
 
 const PORT = process.env.PORT || 5000;
 
-// Start server immediately — don't wait for DB
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+async function startServer() {
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI environment variable is required.');
+  }
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required.');
+  }
 
-// Connect to MongoDB separately (non-blocking)
-mongoose
-  .connect(process.env.MONGODB_URI, {
+  await mongoose.connect(process.env.MONGODB_URI, {
     serverSelectionTimeoutMS: 10000,
     connectTimeoutMS: 10000,
-  })
-  .then(() => {
-    console.log('Connected to MongoDB Atlas');
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
-    console.warn('Server is still running, but DB features will not work.');
   });
+  console.log('Connected to MongoDB');
+
+  app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+}
+
+startServer().catch((err) => {
+  console.error('Failed to start API server:', err.message);
+  process.exit(1);
+});

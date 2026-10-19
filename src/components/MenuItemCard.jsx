@@ -1,37 +1,3 @@
-// import React from 'react';
-
-// export default function MenuItemCard({ item }) {
-//   const { name, description, price, imageUrl, inStock } = item;
-
-//   return (
-//     <div className="flex gap-3 bg-white rounded-xl p-3 shadow-sm border border-stone-100 relative">
-//       <div className="w-20 h-20 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0 relative">
-//         {imageUrl ? (
-//           <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
-//         ) : (
-//           <div className="w-full h-full animate-pulse bg-stone-200" />
-//         )}
-//         {!inStock && (
-//           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-//             <span className="text-[10px] font-bold text-white uppercase tracking-wide">Out of stock</span>
-//           </div>
-//         )}
-//       </div>
-
-//       <div className="flex-grow flex flex-col justify-center">
-//         <h3 className="font-display font-semibold text-cafe-dark text-sm">{name}</h3>
-//         <p className="text-xs text-stone-500 line-clamp-2">{description}</p>
-//       </div>
-
-//       <div className="flex flex-col items-end justify-center">
-//         <span className="font-display font-bold text-cafe-gold text-sm whitespace-nowrap">
-//           {price.toFixed(2)} ETB
-//         </span>
-//       </div>
-//     </div>
-//   );
-// }
-
 import React, { useState } from 'react';
 
 // Each category gets its own footer color, matching the vertical card style

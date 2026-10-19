@@ -18,6 +18,7 @@ export const MasCoffeeLogo = ({ className = "w-12 h-12" }) => (
 // ... MasCoffeeLogo stays exactly the same ...
 
 export default function Layout({ children, showAdminBadge = false }) {
+  
   const currentYear = new Date().getFullYear();
 
   return (
