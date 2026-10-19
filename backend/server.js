@@ -22,31 +22,57 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api/products', productRoutes);
+function requireDatabase(req, res, next) {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ message: 'Database is unavailable. Please try again shortly.' });
+  }
+  next();
+}
+
+app.use('/api/products', requireDatabase, productRoutes);
+app.use('/api/auth/login', requireDatabase);
+app.use('/api/auth/change-password', requireDatabase);
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => res.send('MAS COFFEE API is running.'));
 
 const PORT = process.env.PORT || 5000;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function connectToMongo() {
+  let retryDelay = 5000;
+
+  while (mongoose.connection.readyState !== 1) {
+    if (!process.env.MONGODB_URI) {
+      console.error('MONGODB_URI environment variable is required. Database requests will be unavailable.');
+      return;
+    }
+
+    try {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
+      });
+      console.log('Connected to MongoDB');
+    } catch (err) {
+      console.error(`MongoDB connection failed: ${err.message}`);
+      console.warn(`Retrying MongoDB connection in ${retryDelay / 1000} seconds.`);
+      await sleep(retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 60000);
+    }
+  }
+}
 
 async function startServer() {
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI environment variable is required.');
-  }
   if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET environment variable is required.');
+    console.error('JWT_SECRET environment variable is required for admin authentication.');
   }
-
-  await mongoose.connect(process.env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 10000,
-    connectTimeoutMS: 10000,
-  });
-  console.log('Connected to MongoDB');
 
   app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+  await connectToMongo();
 }
 
 startServer().catch((err) => {
-  console.error('Failed to start API server:', err.message);
+  console.error('Unexpected API server error:', err.message);
   process.exit(1);
 });
